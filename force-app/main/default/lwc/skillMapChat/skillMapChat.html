@@ -1,0 +1,158 @@
+<template>
+    <section class="assistant-shell">
+        <header class="assistant-header">
+            <div class="bot-logo">AI</div>
+
+            <div class="header-copy">
+                <h1>AceInt Career Assistant</h1>
+                <p>
+                    Explore occupations, skills, abilities, knowledge,
+                    tasks, software, and work context.
+                </p>
+            </div>
+
+            <div class="status">
+                <span class="status-dot"></span>
+                Online
+            </div>
+        </header>
+
+        <main class="conversation" data-id="conversation">
+            <template for:each={messages} for:item="message">
+                <article
+                    key={message.id}
+                    class={message.rowClass}
+                >
+                    <template if:true={message.isBot}>
+                        <div class="avatar bot-avatar">AI</div>
+                    </template>
+
+                    <div class={message.bubbleClass}>
+                        <div class="sender-name">
+                            {message.senderName}
+                        </div>
+
+                        <div class="message-text">
+                            {message.text}
+                        </div>
+                    </div>
+
+                    <template if:true={message.isUser}>
+                        <div class="avatar user-avatar">You</div>
+                    </template>
+                </article>
+            </template>
+
+            <template if:true={isLoading}>
+                <article class="message-row bot-row">
+                    <div class="avatar bot-avatar">AI</div>
+
+                    <div class="message-bubble bot-bubble typing-bubble">
+                        <div class="sender-name">AceInt Assistant</div>
+
+                        <div class="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                        </div>
+                    </div>
+                </article>
+            </template>
+        </main>
+
+        <section class="quick-actions">
+            <p class="quick-actions-title">Suggested questions</p>
+
+            <div class="quick-actions-list">
+                <button
+                    type="button"
+                    class="quick-action"
+                    data-question="What skills are important?"
+                    onclick={handleSuggestion}
+                    disabled={isLoading}
+                >
+                    Important skills
+                </button>
+
+                <button
+                    type="button"
+                    class="quick-action"
+                    data-question="What are the main tasks?"
+                    onclick={handleSuggestion}
+                    disabled={isLoading}
+                >
+                    Main tasks
+                </button>
+
+                <button
+                    type="button"
+                    class="quick-action"
+                    data-question="What knowledge is required?"
+                    onclick={handleSuggestion}
+                    disabled={isLoading}
+                >
+                    Required knowledge
+                </button>
+
+                <button
+                    type="button"
+                    class="quick-action"
+                    data-question="What abilities are important?"
+                    onclick={handleSuggestion}
+                    disabled={isLoading}
+                >
+                    Important abilities
+                </button>
+
+                <button
+                    type="button"
+                    class="quick-action"
+                    data-question="What software is used?"
+                    onclick={handleSuggestion}
+                    disabled={isLoading}
+                >
+                    Software used
+                </button>
+
+                <button
+                    type="button"
+                    class="quick-action"
+                    data-question="What is the work environment?"
+                    onclick={handleSuggestion}
+                    disabled={isLoading}
+                >
+                    Work environment
+                </button>
+            </div>
+        </section>
+
+        <footer class="composer">
+            <div class="input-wrapper">
+                <textarea
+                    class="question-input"
+                    value={question}
+                    placeholder="Ask a question about this occupation..."
+                    oninput={handleQuestionChange}
+                    onkeydown={handleKeyDown}
+                    disabled={isLoading}
+                    rows="1"
+                ></textarea>
+
+                <button
+                    type="button"
+                    class="send-button"
+                    onclick={handleSend}
+                    disabled={isSendDisabled}
+                    title="Send message"
+                >
+                    <span>Send</span>
+                    <span class="send-icon">➤</span>
+                </button>
+            </div>
+
+            <p class="composer-help">
+                Press Enter to send. Use Shift + Enter for a new line.
+            </p>
+        </footer>
+    </section>
+</template>
