@@ -11,7 +11,7 @@ async function getSoftwareSkills() {
   const result = await pool.query(`
     SELECT *
     FROM software_skills
-    LIMIT 100
+    ORDER BY onet_code, software_name
   `);
 
   return result.rows;
@@ -49,46 +49,54 @@ app.get("/salesforce", async (_req, res) => {
 async function syncSoftware(): Promise<number> {
   const rows = await getSoftwareSkills();
   const connection = connectSalesforce();
+  const targetOccupationCode = "13-2099.04";
+
+  const occupationResult = await connection.query<{ Id: string }>(
+    `SELECT Id
+     FROM Occupation__c
+     WHERE Occupation_Code__c = '${targetOccupationCode}'
+     LIMIT 1`
+  );
+
+  const occupationId = occupationResult.records[0]?.Id;
+
+  if (!occupationId) {
+    console.log(`Occupation not found for ${targetOccupationCode}`);
+    return 0;
+  }
 
   let created = 0;
 
   for (const row of rows) {
+    if (String(row.onet_code).trim() !== targetOccupationCode) {
+      continue;
+    }
+
+    const softwareName = String(row.software_name ?? "").replace(/'/g, "\\'");
     const existing = await connection.query<{ Id: string }>(
       `SELECT Id
        FROM Software__c
-       WHERE Name = '${row.software_name.replace(/'/g, "\\'")}'
-      AND Occupation__r.Occupation_Code__c = '${row.onet_code.replace(/'/g, "\\'")}'
+       WHERE Name = '${softwareName}'
+       AND Occupation__c = '${occupationId}'
        LIMIT 1`
     );
 
-    if (existing.totalSize === 0) {
-      const occupationResult = await connection.query<{ Id: string }>(
-        `SELECT Id
-         FROM Occupation__c
-         WHERE Occupation_Code__c = '${row.onet_code}'
-         LIMIT 1`
-      );
+    if (existing.totalSize > 0) {
+      continue;
+    }
 
-      const occupationId = occupationResult.records[0]?.Id;
+    const result = await connection.sobject("Software__c").create({
+      Name: row.software_name,
+      Category__c: row.category,
+      Hot_Technology__c: row.hot_technology,
+      In_Demand__c: row.in_demand,
+      Vendor__c: "Unknown",
+      Occupation__c: occupationId,
+    });
 
-      if (!occupationId) {
-        console.log(`Occupation not found for ${row.software_name}`);
-        continue;
-      }
-
-      const result = await connection.sobject("Software__c").create({
-        Name: row.software_name,
-        Category__c: row.category,
-        Hot_Technology__c: row.hot_technology,
-        In_Demand__c: row.in_demand,
-        Vendor__c: "Unknown",
-        Occupation__c: occupationId,
-      });
-
-      if (result.success) {
-          created++;
-         console.log(`✅ Created: ${row.software_name}`);
-      }
+    if (result.success) {
+      created++;
+      console.log(`✅ Created: ${row.software_name}`);
     }
   }
 
@@ -504,7 +512,7 @@ async function syncWorkContext(): Promise<number> {
   }
 
   return created;
-}-+ 
+}
 
 app.get("/sync/skills", async (_req, res) => {
   try {

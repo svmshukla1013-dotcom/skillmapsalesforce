@@ -68,9 +68,9 @@ async function importSoftwareSkills(): Promise<void> {
   const rows =
     XLSX.utils.sheet_to_json<SoftwareSkillRow>(worksheet);
 
-  // Imports rows 11 through 100.
-  // The first 10 rows were already imported earlier.
-  const rowsToImport = rows.slice(10, 100);
+  const rowsToImport = rows.filter(
+    (row) => row["O*NET-SOC Code"] === "13-2099.04"
+  );
 
   let inserted = 0;
 
